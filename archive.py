@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
 import os
 import sys
 import typing
@@ -132,7 +133,7 @@ def insert_submission(submission: praw.models.Submission):
         if cursor.fetchone()[0] != 0:
             return
 
-        print(f"Inserting post '{submission.title}'")
+        logging.info("Storing submission with ID '%s'", submission.id)
         cursor.execute(
             """
             INSERT INTO submission (id, subreddit, title, author, score, content, timestamp, distinguished, stickied, removed)
@@ -162,6 +163,7 @@ def insert_comment(comment: praw.models.Comment):
         if cursor.fetchone()[0] != 0:
             return
 
+        logging.info("Storing comment with ID '%s'", comment.id)
         cursor.execute(
             """
             INSERT INTO comment (id, submission, parent, author, score, content, timestamp, distinguished, stickied, removed)
@@ -203,6 +205,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--subreddit')
     args = parser.parse_args()
+
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.INFO,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
     create_database_layout()
 
