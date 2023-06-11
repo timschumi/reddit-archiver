@@ -219,8 +219,11 @@ def main():
             process_submission(submission)
         for submission in reddit_client.subreddit(args.subreddit).rising(limit=1000):
             process_submission(submission)
-        for submission in reddit_client.subreddit(args.subreddit).top(limit=1000):
-            process_submission(submission)
+        for time_filter in ["all", "day", "hour", "month", "week", "year"]:
+            for submission in reddit_client.subreddit(args.subreddit).top(time_filter=time_filter, limit=1000):
+                process_submission(submission)
+            for submission in reddit_client.subreddit(args.subreddit).controversial(time_filter=time_filter, limit=1000):
+                process_submission(submission)
         for submission in reddit_client.subreddit(args.subreddit).gilded(limit=1000):
             process_submission(submission)
 
