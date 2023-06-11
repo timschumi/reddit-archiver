@@ -131,6 +131,7 @@ def insert_submission(submission: praw.models.Submission):
     with db().cursor() as cursor:
         cursor.execute("SELECT COUNT(1) FROM submission WHERE id = %s", (submission_id,))
         if cursor.fetchone()[0] != 0:
+            logging.debug("Skipping submission with ID '%s'", submission.id)
             return
 
         logging.info("Storing submission with ID '%s'", submission.id)
@@ -161,6 +162,7 @@ def insert_comment(comment: praw.models.Comment):
     with db().cursor() as cursor:
         cursor.execute("SELECT COUNT(1) FROM comment WHERE id = %s", (comment_id,))
         if cursor.fetchone()[0] != 0:
+            logging.debug("Skipping comment with ID '%s'", comment.id)
             return
 
         logging.info("Storing comment with ID '%s'", comment.id)
