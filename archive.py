@@ -224,8 +224,11 @@ def main():
                 process_submission(submission)
             for submission in reddit_client.subreddit(args.subreddit).controversial(time_filter=time_filter, limit=1000):
                 process_submission(submission)
-        for submission in reddit_client.subreddit(args.subreddit).gilded(limit=1000):
-            process_submission(submission)
+        for gilded_item in reddit_client.subreddit(args.subreddit).gilded(limit=1000):
+            if isinstance(gilded_item, praw.models.Submission):
+                process_submission(gilded_item)
+            else:
+                process_comment(gilded_item)
 
 
 if __name__ == "__main__":
