@@ -191,12 +191,19 @@ def insert_comment(comment: praw.models.Comment):
 def process_submission(submission: praw.models.Submission):
     insert_submission(submission)
 
-    comment_tree = submission.comments
-    while len(comment_tree.replace_more()) > 0:
-        pass
+    with db().cursor() as cursor:
+        cursor.execute("SELECT COUNT(1) FROM comment WHERE submission = %s", (base36.loads(submission.id),))
+        stored_comments = cursor.fetchone()[0]
 
-    for comment in comment_tree.list():
-        insert_comment(comment)
+    if stored_comments < submission.num_comments:
+        logging.info("Post '%s' only has %s out of %s comments stored, starting rehydration...", submission.id, stored_comments, submission.num_comments)
+
+        comment_tree = submission.comments
+        while len(comment_tree.replace_more()) > 0:
+            pass
+
+        for comment in comment_tree.list():
+            insert_comment(comment)
 
 
 def process_comment(comment: praw.models.Comment):
