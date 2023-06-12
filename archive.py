@@ -238,18 +238,18 @@ def main():
     reddit_client.read_only = True
 
     if args.subreddit:
-        for submission in reddit_client.subreddit(args.subreddit).hot(limit=1000):
+        for submission in reddit_client.subreddit(args.subreddit).hot(limit=None):
             process_submission(submission)
-        for submission in reddit_client.subreddit(args.subreddit).new(limit=1000):
+        for submission in reddit_client.subreddit(args.subreddit).new(limit=None):
             process_submission(submission)
-        for submission in reddit_client.subreddit(args.subreddit).rising(limit=1000):
+        for submission in reddit_client.subreddit(args.subreddit).rising(limit=None):
             process_submission(submission)
         for time_filter in ["all", "day", "hour", "month", "week", "year"]:
-            for submission in reddit_client.subreddit(args.subreddit).top(time_filter=time_filter, limit=1000):
+            for submission in reddit_client.subreddit(args.subreddit).top(time_filter=time_filter, limit=None):
                 process_submission(submission)
-            for submission in reddit_client.subreddit(args.subreddit).controversial(time_filter=time_filter, limit=1000):
+            for submission in reddit_client.subreddit(args.subreddit).controversial(time_filter=time_filter, limit=None):
                 process_submission(submission)
-        for gilded_item in reddit_client.subreddit(args.subreddit).gilded(limit=1000):
+        for gilded_item in reddit_client.subreddit(args.subreddit).gilded(limit=None):
             if isinstance(gilded_item, praw.models.Submission):
                 process_submission(gilded_item)
             else:
