@@ -103,7 +103,11 @@ def get_subreddit_id(subreddit: praw.models.Subreddit):
     numeric_id = base36.loads(subreddit.id)
 
     with db().cursor() as cursor:
-        cursor.execute("INSERT INTO subreddit (id, name) VALUES (%s, %s) ON CONFLICT DO NOTHING", (numeric_id, subreddit.display_name))
+        cursor.execute("SELECT COUNT(1) FROM subreddit WHERE id = %s", (numeric_id,))
+        if cursor.fetchone()[0] != 0:
+            return numeric_id
+
+        cursor.execute("INSERT INTO subreddit (id, name) VALUES (%s, %s)", (numeric_id, subreddit.display_name))
         db().commit()
 
     return numeric_id
@@ -120,7 +124,11 @@ def get_redditor_id(redditor: praw.models.Redditor):
     numeric_id = base36.loads(redditor_id)
 
     with db().cursor() as cursor:
-        cursor.execute("INSERT INTO redditor (id, name) VALUES (%s, %s) ON CONFLICT DO NOTHING", (numeric_id, redditor.name))
+        cursor.execute("SELECT COUNT(1) FROM redditor WHERE id = %s", (numeric_id,))
+        if cursor.fetchone()[0] != 0:
+            return numeric_id
+
+        cursor.execute("INSERT INTO redditor (id, name) VALUES (%s, %s)", (numeric_id, redditor.name))
         db().commit()
 
     return numeric_id
