@@ -230,6 +230,7 @@ def process_any(item):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--subreddit')
+    parser.add_argument('--redditor')
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -260,6 +261,19 @@ def main():
                 process_submission(submission)
         for gilded_item in reddit_client.subreddit(args.subreddit).gilded(limit=None):
             process_any(gilded_item)
+
+    if args.redditor:
+        for item in reddit_client.redditor(args.redditor).hot(limit=None):
+            process_any(item)
+        for item in reddit_client.redditor(args.redditor).new(limit=None):
+            process_any(item)
+        for time_filter in ["all", "day", "hour", "month", "week", "year"]:
+            for item in reddit_client.redditor(args.redditor).top(time_filter=time_filter, limit=None):
+                process_any(item)
+            for item in reddit_client.redditor(args.redditor).controversial(time_filter=time_filter, limit=None):
+                process_any(item)
+        for item in reddit_client.redditor(args.redditor).gilded(limit=None):
+            process_any(item)
 
 
 if __name__ == "__main__":
