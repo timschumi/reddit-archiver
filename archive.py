@@ -231,7 +231,7 @@ def main():
 
     create_database_layout()
 
-    reddit_client = praw.Reddit(user_agent="Archiver",
+    reddit_client = praw.Reddit(user_agent="linux:net.timschumi.redditarchiver:v1.0.0 (by /u/timschumi)",
                                 client_id=REDDIT_ID,
                                 client_secret=REDDIT_SECRET,
                                 check_for_async=False)
