@@ -218,6 +218,15 @@ def process_comment(comment: praw.models.Comment):
     process_submission(comment.submission)
 
 
+def process_any(item):
+    if isinstance(item, praw.models.Submission):
+        process_submission(item)
+    elif isinstance(item, praw.models.Comment):
+        process_comment(item)
+    else:
+        logging.error("Trying to process unknown item type: %s", type(item))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--subreddit')
@@ -250,10 +259,7 @@ def main():
             for submission in reddit_client.subreddit(args.subreddit).controversial(time_filter=time_filter, limit=None):
                 process_submission(submission)
         for gilded_item in reddit_client.subreddit(args.subreddit).gilded(limit=None):
-            if isinstance(gilded_item, praw.models.Submission):
-                process_submission(gilded_item)
-            else:
-                process_comment(gilded_item)
+            process_any(gilded_item)
 
 
 if __name__ == "__main__":
