@@ -232,6 +232,7 @@ def main():
     parser.add_argument('--subreddit', action='append', default=[])
     parser.add_argument('--redditor', action='append', default=[])
     parser.add_argument('--submission', action='append', default=[])
+    parser.add_argument('--submission-file')
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -278,6 +279,18 @@ def main():
 
     for submission in args.submission:
         process_submission(reddit_client.submission(submission))
+
+    if args.submission_file:
+        with open(args.submission_file, "r") as file:
+            lines = file.readlines()
+
+        for line in lines:
+            line = line.strip()
+
+            if not line:
+                continue
+
+            process_submission(reddit_client.submission(line))
 
 
 if __name__ == "__main__":
