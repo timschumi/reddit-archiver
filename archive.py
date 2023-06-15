@@ -229,8 +229,8 @@ def process_any(item):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--subreddit')
-    parser.add_argument('--redditor')
+    parser.add_argument('--subreddit', action='append', default=[])
+    parser.add_argument('--redditor', action='append', default=[])
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -247,32 +247,32 @@ def main():
                                 check_for_async=False)
     reddit_client.read_only = True
 
-    if args.subreddit:
-        for submission in reddit_client.subreddit(args.subreddit).hot(limit=None):
+    for subreddit in args.subreddit:
+        for submission in reddit_client.subreddit(subreddit).hot(limit=None):
             process_submission(submission)
-        for submission in reddit_client.subreddit(args.subreddit).new(limit=None):
+        for submission in reddit_client.subreddit(subreddit).new(limit=None):
             process_submission(submission)
-        for submission in reddit_client.subreddit(args.subreddit).rising(limit=None):
+        for submission in reddit_client.subreddit(subreddit).rising(limit=None):
             process_submission(submission)
         for time_filter in ["all", "day", "hour", "month", "week", "year"]:
-            for submission in reddit_client.subreddit(args.subreddit).top(time_filter=time_filter, limit=None):
+            for submission in reddit_client.subreddit(subreddit).top(time_filter=time_filter, limit=None):
                 process_submission(submission)
-            for submission in reddit_client.subreddit(args.subreddit).controversial(time_filter=time_filter, limit=None):
+            for submission in reddit_client.subreddit(subreddit).controversial(time_filter=time_filter, limit=None):
                 process_submission(submission)
-        for gilded_item in reddit_client.subreddit(args.subreddit).gilded(limit=None):
+        for gilded_item in reddit_client.subreddit(subreddit).gilded(limit=None):
             process_any(gilded_item)
 
-    if args.redditor:
-        for item in reddit_client.redditor(args.redditor).hot(limit=None):
+    for redditor in args.redditor:
+        for item in reddit_client.redditor(redditor).hot(limit=None):
             process_any(item)
-        for item in reddit_client.redditor(args.redditor).new(limit=None):
+        for item in reddit_client.redditor(redditor).new(limit=None):
             process_any(item)
         for time_filter in ["all", "day", "hour", "month", "week", "year"]:
-            for item in reddit_client.redditor(args.redditor).top(time_filter=time_filter, limit=None):
+            for item in reddit_client.redditor(redditor).top(time_filter=time_filter, limit=None):
                 process_any(item)
-            for item in reddit_client.redditor(args.redditor).controversial(time_filter=time_filter, limit=None):
+            for item in reddit_client.redditor(redditor).controversial(time_filter=time_filter, limit=None):
                 process_any(item)
-        for item in reddit_client.redditor(args.redditor).gilded(limit=None):
+        for item in reddit_client.redditor(redditor).gilded(limit=None):
             process_any(item)
 
 
