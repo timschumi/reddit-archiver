@@ -231,6 +231,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--subreddit', action='append', default=[])
     parser.add_argument('--redditor', action='append', default=[])
+    parser.add_argument('--submission', action='append', default=[])
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -274,6 +275,9 @@ def main():
                 process_any(item)
         for item in reddit_client.redditor(redditor).gilded(limit=None):
             process_any(item)
+
+    for submission in args.submission:
+        process_submission(reddit_client.submission(submission))
 
 
 if __name__ == "__main__":
