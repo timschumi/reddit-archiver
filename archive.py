@@ -9,6 +9,7 @@ import typing
 import base36
 import praw
 import praw.models
+import prawcore
 import prawcore.exceptions
 import psycopg
 
@@ -276,6 +277,11 @@ def main():
                 process_any(item)
         for item in reddit_client.redditor(redditor).gilded(limit=None):
             process_any(item)
+        try:
+            for item in reddit_client.redditor(redditor).saved(limit=None):
+                process_any(item)
+        except prawcore.Forbidden:
+            logging.info("No access to saved items of redditor '%s', skipping...", redditor)
 
     for submission in args.submission:
         process_submission(reddit_client.submission(submission))
