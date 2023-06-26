@@ -250,35 +250,39 @@ def main():
                                 check_for_async=False)
     reddit_client.read_only = True
 
-    for subreddit in args.subreddit:
-        for submission in reddit_client.subreddit(subreddit).hot(limit=None):
+    for subreddit_name in args.subreddit:
+        subreddit = reddit_client.subreddit(subreddit_name)
+
+        for submission in subreddit.hot(limit=None):
             process_submission(submission)
-        for submission in reddit_client.subreddit(subreddit).new(limit=None):
+        for submission in subreddit.new(limit=None):
             process_submission(submission)
-        for submission in reddit_client.subreddit(subreddit).rising(limit=None):
+        for submission in subreddit.rising(limit=None):
             process_submission(submission)
         for time_filter in ["all", "day", "hour", "month", "week", "year"]:
-            for submission in reddit_client.subreddit(subreddit).top(time_filter=time_filter, limit=None):
+            for submission in subreddit.top(time_filter=time_filter, limit=None):
                 process_submission(submission)
-            for submission in reddit_client.subreddit(subreddit).controversial(time_filter=time_filter, limit=None):
+            for submission in subreddit.controversial(time_filter=time_filter, limit=None):
                 process_submission(submission)
-        for gilded_item in reddit_client.subreddit(subreddit).gilded(limit=None):
+        for gilded_item in subreddit.gilded(limit=None):
             process_any(gilded_item)
 
-    for redditor in args.redditor:
-        for item in reddit_client.redditor(redditor).hot(limit=None):
+    for redditor_name in args.redditor:
+        redditor = reddit_client.redditor(redditor_name)
+
+        for item in redditor.hot(limit=None):
             process_any(item)
-        for item in reddit_client.redditor(redditor).new(limit=None):
+        for item in redditor.new(limit=None):
             process_any(item)
         for time_filter in ["all", "day", "hour", "month", "week", "year"]:
-            for item in reddit_client.redditor(redditor).top(time_filter=time_filter, limit=None):
+            for item in redditor.top(time_filter=time_filter, limit=None):
                 process_any(item)
-            for item in reddit_client.redditor(redditor).controversial(time_filter=time_filter, limit=None):
+            for item in redditor.controversial(time_filter=time_filter, limit=None):
                 process_any(item)
-        for item in reddit_client.redditor(redditor).gilded(limit=None):
+        for item in redditor.gilded(limit=None):
             process_any(item)
         try:
-            for item in reddit_client.redditor(redditor).saved(limit=None):
+            for item in redditor.saved(limit=None):
                 process_any(item)
         except prawcore.Forbidden:
             logging.info("No access to saved items of redditor '%s', skipping...", redditor)
