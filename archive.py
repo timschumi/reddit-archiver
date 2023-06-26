@@ -218,6 +218,24 @@ def process_submission(submission: praw.models.Submission):
 def process_comment(comment: praw.models.Comment):
     process_submission(comment.submission)
 
+    chain = []
+    while True:
+        chain.append(comment)
+
+        parent_comment_id = base36.loads(comment.parent_id[3:]) if comment.parent_id.startswith('t1_') else None
+        if parent_comment_id is None:
+            break
+
+        with db().cursor() as cursor:
+            cursor.execute("SELECT COUNT(1) FROM comment WHERE id = %s", (parent_comment_id,))
+            if cursor.fetchone()[0] != 0:
+                break
+
+        comment = comment.parent()
+
+    for comment in reversed(chain):
+        insert_comment(comment)
+
 
 def process_any(item):
     if isinstance(item, praw.models.Submission):
