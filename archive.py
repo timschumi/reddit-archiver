@@ -271,7 +271,10 @@ def main():
                                 username=REDDIT_USERNAME,
                                 password=REDDIT_PASSWORD,
                                 check_for_async=False)
-    reddit_client.read_only = True
+
+    if not args.me:
+        # --me does not really require non-read-only access, but setting read_only disables authentication alltogether, which we don't want.
+        reddit_client.read_only = True
 
     if args.me:
         me = reddit_client.user.me()
