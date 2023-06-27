@@ -275,6 +275,11 @@ def main():
 
     if args.me:
         me = reddit_client.user.me()
+
+        if me is None:
+            logging.error("Archiving the user was requested, but the user is not authenticated")
+            return 1
+
         args.redditor.append(me.name)
 
         try:
