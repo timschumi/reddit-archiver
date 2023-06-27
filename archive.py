@@ -20,6 +20,8 @@ POSTGRES_DATABASE = os.environ.get("POSTGRES_DATABASE")
 
 REDDIT_ID = os.environ.get('REDDIT_ID')
 REDDIT_SECRET = os.environ.get('REDDIT_SECRET')
+REDDIT_USERNAME = os.environ.get('REDDIT_USERNAME')
+REDDIT_PASSWORD = os.environ.get('REDDIT_PASSWORD')
 
 
 def db() -> psycopg.Connection[typing.Any]:
@@ -266,6 +268,8 @@ def main():
     reddit_client = praw.Reddit(user_agent="linux:net.timschumi.redditarchiver:v1.0.0 (by /u/timschumi)",
                                 client_id=REDDIT_ID,
                                 client_secret=REDDIT_SECRET,
+                                username=REDDIT_USERNAME,
+                                password=REDDIT_PASSWORD,
                                 check_for_async=False)
     reddit_client.read_only = True
 
