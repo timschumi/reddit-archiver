@@ -248,6 +248,7 @@ def process_any(item):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--me', action='store_true')
     parser.add_argument('--subreddit', action='append', default=[])
     parser.add_argument('--redditor', action='append', default=[])
     parser.add_argument('--submission', action='append', default=[])
@@ -267,6 +268,16 @@ def main():
                                 client_secret=REDDIT_SECRET,
                                 check_for_async=False)
     reddit_client.read_only = True
+
+    if args.me:
+        me = reddit_client.user.me()
+        args.redditor.append(me.name)
+
+        try:
+            for item in me.saved(limit=None):
+                process_any(item)
+        except prawcore.Forbidden:
+            logging.warn("No access to saved items of own user, skipping...")
 
     for subreddit_name in args.subreddit:
         subreddit = reddit_client.subreddit(subreddit_name)
@@ -299,11 +310,6 @@ def main():
                 process_any(item)
         for item in redditor.gilded(limit=None):
             process_any(item)
-        try:
-            for item in redditor.saved(limit=None):
-                process_any(item)
-        except prawcore.Forbidden:
-            logging.info("No access to saved items of redditor '%s', skipping...", redditor)
 
     for submission in args.submission:
         process_submission(reddit_client.submission(submission))
