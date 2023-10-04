@@ -99,6 +99,28 @@ def create_database_layout():
             );
             """
         )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS saved_submission (
+                id SERIAL PRIMARY KEY NOT NULL,
+                owner BIGINT,
+                submission BIGINT NOT NULL,
+                FOREIGN KEY (submission) REFERENCES submission (id),
+                FOREIGN KEY (owner) REFERENCES redditor (id)
+            );
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS saved_comment (
+                id SERIAL PRIMARY KEY NOT NULL,
+                owner BIGINT,
+                comment BIGINT NOT NULL,
+                FOREIGN KEY (comment) REFERENCES comment (id),
+                FOREIGN KEY (owner) REFERENCES redditor (id)
+            );
+            """
+        )
         db().commit()
 
 
@@ -199,7 +221,7 @@ def insert_comment(comment: praw.models.Comment):
         db().commit()
 
 
-def process_submission(submission: praw.models.Submission):
+def process_submission(submission: praw.models.Submission, saved_by=None):
     insert_submission(submission)
 
     with db().cursor() as cursor:
@@ -216,8 +238,15 @@ def process_submission(submission: praw.models.Submission):
         for comment in comment_tree.list():
             insert_comment(comment)
 
+    if saved_by:
+        with db().cursor() as cursor:
+            cursor.execute("SELECT COUNT(1) FROM saved_submission WHERE owner = %s AND submission = %s", (saved_by, base36.loads(submission.id)))
+            if cursor.fetchone()[0] == 0:
+                cursor.execute("INSERT INTO saved_submission (owner, submission) VALUES (%s, %s)", (saved_by, base36.loads(submission.id)))
+            db().commit()
 
-def process_comment(comment: praw.models.Comment):
+
+def process_comment(comment: praw.models.Comment, saved_by=None):
     process_submission(comment.submission)
 
     chain = []
@@ -238,12 +267,19 @@ def process_comment(comment: praw.models.Comment):
     for comment in reversed(chain):
         insert_comment(comment)
 
+    if saved_by:
+        with db().cursor() as cursor:
+            cursor.execute("SELECT COUNT(1) FROM saved_comment WHERE owner = %s AND comment = %s", (saved_by, base36.loads(comment.id)))
+            if cursor.fetchone()[0] == 0:
+                cursor.execute("INSERT INTO saved_comment (owner, comment) VALUES (%s, %s)", (saved_by, base36.loads(comment.id)))
+            db().commit()
 
-def process_any(item):
+
+def process_any(item, **kwargs):
     if isinstance(item, praw.models.Submission):
-        process_submission(item)
+        process_submission(item, **kwargs)
     elif isinstance(item, praw.models.Comment):
-        process_comment(item)
+        process_comment(item, **kwargs)
     else:
         logging.error("Trying to process unknown item type: %s", type(item))
 
@@ -285,9 +321,11 @@ def main():
 
         args.redditor.append(me.name)
 
+        redditor_id = get_redditor_id(me)
+
         try:
             for item in me.saved(limit=None):
-                process_any(item)
+                process_any(item, saved_by=redditor_id)
         except prawcore.Forbidden:
             logging.warn("No access to saved items of own user, skipping...")
 
