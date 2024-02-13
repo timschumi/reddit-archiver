@@ -330,39 +330,48 @@ def main():
             logging.warn("No access to saved items of own user, skipping...")
 
     for subreddit_name in args.subreddit:
-        subreddit = reddit_client.subreddit(subreddit_name)
+        try:
+            subreddit = reddit_client.subreddit(subreddit_name)
 
-        for submission in subreddit.hot(limit=None):
-            process_submission(submission)
-        for submission in subreddit.new(limit=None):
-            process_submission(submission)
-        for submission in subreddit.rising(limit=None):
-            process_submission(submission)
-        for time_filter in ["all", "day", "hour", "month", "week", "year"]:
-            for submission in subreddit.top(time_filter=time_filter, limit=None):
+            for submission in subreddit.hot(limit=None):
                 process_submission(submission)
-            for submission in subreddit.controversial(time_filter=time_filter, limit=None):
+            for submission in subreddit.new(limit=None):
                 process_submission(submission)
-        for gilded_item in subreddit.gilded(limit=None):
-            process_any(gilded_item)
+            for submission in subreddit.rising(limit=None):
+                process_submission(submission)
+            for time_filter in ["all", "day", "hour", "month", "week", "year"]:
+                for submission in subreddit.top(time_filter=time_filter, limit=None):
+                    process_submission(submission)
+                for submission in subreddit.controversial(time_filter=time_filter, limit=None):
+                    process_submission(submission)
+            for gilded_item in subreddit.gilded(limit=None):
+                process_any(gilded_item)
+        except prawcore.exceptions.NotFound:
+            logging.exception("Failed to find subreddit '%s'", subreddit_name)
 
     for redditor_name in args.redditor:
-        redditor = reddit_client.redditor(redditor_name)
+        try:
+            redditor = reddit_client.redditor(redditor_name)
 
-        for item in redditor.hot(limit=None):
-            process_any(item)
-        for item in redditor.new(limit=None):
-            process_any(item)
-        for time_filter in ["all", "day", "hour", "month", "week", "year"]:
-            for item in redditor.top(time_filter=time_filter, limit=None):
+            for item in redditor.hot(limit=None):
                 process_any(item)
-            for item in redditor.controversial(time_filter=time_filter, limit=None):
+            for item in redditor.new(limit=None):
                 process_any(item)
-        for item in redditor.gilded(limit=None):
-            process_any(item)
+            for time_filter in ["all", "day", "hour", "month", "week", "year"]:
+                for item in redditor.top(time_filter=time_filter, limit=None):
+                    process_any(item)
+                for item in redditor.controversial(time_filter=time_filter, limit=None):
+                    process_any(item)
+            for item in redditor.gilded(limit=None):
+                process_any(item)
+        except prawcore.exceptions.NotFound:
+            logging.exception("Failed to find redditor '%s'", redditor_name)
 
     for submission in args.submission:
-        process_submission(reddit_client.submission(submission))
+        try:
+            process_submission(reddit_client.submission(submission))
+        except prawcore.exception.NotFound:
+            logging.exception("Failed to find submission '%s'", submission)
 
     if args.submission_file:
         with open(args.submission_file, "r") as file:
@@ -374,7 +383,10 @@ def main():
             if not line:
                 continue
 
-            process_submission(reddit_client.submission(line))
+            try:
+                process_submission(reddit_client.submission(line))
+            except prawcore.exception.NotFound:
+                logging.exception("Failed to find submission '%s'", line)
 
 
 if __name__ == "__main__":
