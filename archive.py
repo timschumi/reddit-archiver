@@ -75,6 +75,7 @@ def create_database_layout():
                 distinguished BOOLEAN NOT NULL,
                 stickied BOOLEAN NOT NULL,
                 removed BOOLEAN NOT NULL,
+                hidden_comments INTEGER NOT NULL DEFAULT 0,
                 FOREIGN KEY (subreddit) REFERENCES subreddit (id),
                 FOREIGN KEY (author) REFERENCES redditor (id) ON DELETE SET NULL
             );
@@ -227,9 +228,11 @@ def process_submission(submission: praw.models.Submission, saved_by=None):
     with db().cursor() as cursor:
         cursor.execute("SELECT COUNT(1) FROM comment WHERE submission = %s", (base36.loads(submission.id),))
         stored_comments = cursor.fetchone()[0]
+        cursor.execute("SELECT hidden_comments FROM submission WHERE id = %s", (base36.loads(submission.id),))
+        hidden_comments = cursor.fetchone()[0]
 
-    if stored_comments < submission.num_comments:
-        logging.info("Post '%s' only has %s out of %s comments stored, starting rehydration...", submission.id, stored_comments, submission.num_comments)
+    if stored_comments + hidden_comments < submission.num_comments:
+        logging.info("Post '%s' only has %s (%s including hidden comments) out of %s comments stored, starting rehydration...", submission.id, stored_comments, stored_comments + hidden_comments, submission.num_comments)
 
         comment_tree = submission.comments
         while len(comment_tree.replace_more()) > 0:
@@ -237,6 +240,10 @@ def process_submission(submission: praw.models.Submission, saved_by=None):
 
         for comment in comment_tree.list():
             insert_comment(comment)
+
+        with db().cursor() as cursor:
+            cursor.execute("UPDATE submission SET hidden_comments = %s WHERE id = %s", (submission.num_comments - len(comment_tree.list()), base36.loads(submission.id)))
+            db().commit()
 
     if saved_by:
         with db().cursor() as cursor:
