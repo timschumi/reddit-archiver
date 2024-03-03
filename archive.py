@@ -361,7 +361,7 @@ def main():
                 process_submission(submission)
             for submission in subreddit.controversial(time_filter=time_filter, limit=None):
                 process_submission(submission)
-        for gilded_item in safe_iterable(lambda: subreddit.gilded(limit=None)):
+        for gilded_item in safe_iterable(lambda: list(subreddit.gilded(limit=None))):
             process_any(gilded_item)
 
     for redditor_name in args.redditor:
@@ -379,7 +379,7 @@ def main():
                 process_any(item)
             for item in redditor.controversial(time_filter=time_filter, limit=None):
                 process_any(item)
-        for item in safe_iterable(lambda: redditor.gilded(limit=None)):
+        for item in safe_iterable(lambda: list(redditor.gilded(limit=None))):
             process_any(item)
 
     for submission in args.submission:
