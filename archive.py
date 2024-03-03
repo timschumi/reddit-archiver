@@ -291,6 +291,14 @@ def process_any(item, **kwargs):
         logging.error("Trying to process unknown item type: %s", type(item))
 
 
+def safe_iterable(func):
+    try:
+        return func()
+    except prawcore.exceptions.NotFound:
+        logging.exception("Failed to retrieve object list via the API, falling back to an empty list")
+        return []
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--me', action='store_true')
@@ -339,45 +347,45 @@ def main():
     for subreddit_name in args.subreddit:
         try:
             subreddit = reddit_client.subreddit(subreddit_name)
-
-            for submission in subreddit.hot(limit=None):
-                process_submission(submission)
-            for submission in subreddit.new(limit=None):
-                process_submission(submission)
-            for submission in subreddit.rising(limit=None):
-                process_submission(submission)
-            for time_filter in ["all", "day", "hour", "month", "week", "year"]:
-                for submission in subreddit.top(time_filter=time_filter, limit=None):
-                    process_submission(submission)
-                for submission in subreddit.controversial(time_filter=time_filter, limit=None):
-                    process_submission(submission)
-            for gilded_item in subreddit.gilded(limit=None):
-                process_any(gilded_item)
         except prawcore.exceptions.NotFound:
             logging.exception("Failed to find subreddit '%s'", subreddit_name)
+
+        for submission in subreddit.hot(limit=None):
+            process_submission(submission)
+        for submission in subreddit.new(limit=None):
+            process_submission(submission)
+        for submission in subreddit.rising(limit=None):
+            process_submission(submission)
+        for time_filter in ["all", "day", "hour", "month", "week", "year"]:
+            for submission in subreddit.top(time_filter=time_filter, limit=None):
+                process_submission(submission)
+            for submission in subreddit.controversial(time_filter=time_filter, limit=None):
+                process_submission(submission)
+        for gilded_item in safe_iterable(lambda: subreddit.gilded(limit=None)):
+            process_any(gilded_item)
 
     for redditor_name in args.redditor:
         try:
             redditor = reddit_client.redditor(redditor_name)
-
-            for item in redditor.hot(limit=None):
-                process_any(item)
-            for item in redditor.new(limit=None):
-                process_any(item)
-            for time_filter in ["all", "day", "hour", "month", "week", "year"]:
-                for item in redditor.top(time_filter=time_filter, limit=None):
-                    process_any(item)
-                for item in redditor.controversial(time_filter=time_filter, limit=None):
-                    process_any(item)
-            for item in redditor.gilded(limit=None):
-                process_any(item)
         except prawcore.exceptions.NotFound:
             logging.exception("Failed to find redditor '%s'", redditor_name)
+
+        for item in redditor.hot(limit=None):
+            process_any(item)
+        for item in redditor.new(limit=None):
+            process_any(item)
+        for time_filter in ["all", "day", "hour", "month", "week", "year"]:
+            for item in redditor.top(time_filter=time_filter, limit=None):
+                process_any(item)
+            for item in redditor.controversial(time_filter=time_filter, limit=None):
+                process_any(item)
+        for item in safe_iterable(lambda: redditor.gilded(limit=None)):
+            process_any(item)
 
     for submission in args.submission:
         try:
             process_submission(reddit_client.submission(submission))
-        except prawcore.exception.NotFound:
+        except prawcore.exceptions.NotFound:
             logging.exception("Failed to find submission '%s'", submission)
 
     if args.submission_file:
@@ -392,7 +400,7 @@ def main():
 
             try:
                 process_submission(reddit_client.submission(line))
-            except prawcore.exception.NotFound:
+            except prawcore.exceptions.NotFound:
                 logging.exception("Failed to find submission '%s'", line)
 
 
