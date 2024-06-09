@@ -128,14 +128,21 @@ def create_database_layout():
 def get_subreddit_id(subreddit: praw.models.Subreddit):
     numeric_id = base36.loads(subreddit.id)
 
+    if not hasattr(get_subreddit_id, "cache"):
+        get_subreddit_id.cache = set()
+    if numeric_id in get_subreddit_id.cache:
+        return numeric_id
+
     with db().cursor() as cursor:
         cursor.execute("SELECT COUNT(1) FROM subreddit WHERE id = %s", (numeric_id,))
         if cursor.fetchone()[0] != 0:
+            get_subreddit_id.cache.add(numeric_id)
             return numeric_id
 
         cursor.execute("INSERT INTO subreddit (id, name) VALUES (%s, %s)", (numeric_id, subreddit.display_name))
         db().commit()
 
+    get_subreddit_id.cache.add(numeric_id)
     return numeric_id
 
 
@@ -149,14 +156,21 @@ def get_redditor_id(redditor: praw.models.Redditor):
 
     numeric_id = base36.loads(redditor_id)
 
+    if not hasattr(get_redditor_id, "cache"):
+        get_redditor_id.cache = set()
+    if numeric_id in get_redditor_id.cache:
+        return numeric_id
+
     with db().cursor() as cursor:
         cursor.execute("SELECT COUNT(1) FROM redditor WHERE id = %s", (numeric_id,))
         if cursor.fetchone()[0] != 0:
+            get_redditor_id.cache.add(numeric_id)
             return numeric_id
 
         cursor.execute("INSERT INTO redditor (id, name) VALUES (%s, %s)", (numeric_id, redditor.name))
         db().commit()
 
+    get_redditor_id.cache.add(numeric_id)
     return numeric_id
 
 
