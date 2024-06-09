@@ -213,6 +213,11 @@ def insert_comment(comment: praw.models.Comment):
             logging.debug("Skipping comment with ID '%s'", comment.id)
             return
 
+    insert_comment_unchecked(comment)
+
+def insert_comment_unchecked(comment: praw.models.Comment):
+    comment_id = base36.loads(comment.id)
+    with db().cursor() as cursor:
         logging.info("Storing comment with ID '%s'", comment.id)
         cursor.execute(
             """
@@ -252,8 +257,14 @@ def process_submission(submission: praw.models.Submission, saved_by=None):
         while len(comment_tree.replace_more()) > 0:
             pass
 
+        with db().cursor() as cursor:
+            cursor.execute("SELECT id FROM comment WHERE submission = %s", (base36.loads(submission.id),))
+            existing_comments = {e[0] for e in cursor.fetchall()}
+
         for comment in comment_tree.list():
-            insert_comment(comment)
+            if base36.loads(comment.id) in existing_comments:
+                continue
+            insert_comment_unchecked(comment)
 
         with db().cursor() as cursor:
             cursor.execute("UPDATE submission SET hidden_comments = %s WHERE id = %s", (submission.num_comments - len(comment_tree.list()), base36.loads(submission.id)))
